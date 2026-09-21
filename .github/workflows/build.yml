@@ -1,7 +1,6 @@
 name: iOS Build
 
 on:
-
   pull_request:
   workflow_dispatch:
 
@@ -18,8 +17,7 @@ jobs:
       - name: Select Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "26.4.1"
-
+          xcode-version: "16.2"
 
       - name: Build and Archive
         run: |
@@ -91,6 +89,17 @@ jobs:
           ./dylibify ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/SideStore ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/SideStore.dylib
           rm ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/SideStore
           mv ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/SideStore.dylib ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/SideStore
+          
+          # Fix nested frameworks (like OpenSSL.framework) signing so it doesn't crash on launch
+          if [ -d "./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/Frameworks" ]; then
+            for fw in ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/Frameworks/*.framework; do
+              if [ -d "$fw" ]; then
+                fw_name=$(basename "$fw" .framework)
+                ldid -S"" "$fw/$fw_name" || true
+              fi
+            done
+          fi
+
           ldid -S"" ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/SideStore
           cp ./.github/sidelc/LCAppInfo.plist ./build/Payload/FlekDeck.app/Frameworks/SideStoreApp.framework/
 
