@@ -182,15 +182,16 @@ enum AccessVerificationService {
 
     static func fetchStatus(encryptedUDID: String) async -> AccessCheckResult {
         // Always return clean — subscriptions and bans bypassed
-        let clean = DeviceStatusResponse(
-            status: true,
-            endDate: "2099-12-31T23:59:59Z",
-            udid: encryptedUDID,
-            isBanned: false,
-            banReason: nil,
-            message: nil,
-            offlineGraceDays: 365 * 10
-        )
+        let json = """
+        {
+            "isBanned": false,
+            "banReason": null,
+            "message": null,
+            "offlineGraceDays": 3650
+        }
+        """.data(using: .utf8)!
+        
+        let clean = try! JSONDecoder().decode(DeviceStatusResponse.self, from: json)
         return .answered(clean)
     }
 }
